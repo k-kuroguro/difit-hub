@@ -1,6 +1,6 @@
 {
-  "name": "Diff viewer",
-  "short_name": "Diff viewer",
+  "name": "difit-hub",
+  "short_name": "difit-hub",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
