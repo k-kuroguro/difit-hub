@@ -1,6 +1,6 @@
 import $ from '@david/dax';
 
-import { targets } from './args.ts';
+import { targetLabel, targets } from './args.ts';
 import { PORTS } from './config.ts';
 import { urlOf } from './tailscale.ts';
 
@@ -9,6 +9,7 @@ export interface Server {
    pid: number;
    repo: string;
    target: string;
+   label: string;
    comments: number | null;
    url: string;
    started: number; // Unix seconds
@@ -79,12 +80,14 @@ async function commentCount(port: number): Promise<number | null> {
 export async function listServers(): Promise<Server[]> {
    const servers = [];
    for (const [port, pid] of await runningServers()) {
+      const target = targets(await serverArgs(pid)).join(' ');
       const elapsed = Number(await $`ps -o etimes= -p ${pid}`.text());
       servers.push({
          port,
          pid,
          repo: await serverRoot(pid),
-         target: targets(await serverArgs(pid)).join(' '),
+         target,
+         label: targetLabel(target),
          comments: await commentCount(port),
          url: await urlOf(port),
          started: Math.floor(Date.now() / 1000) - elapsed,

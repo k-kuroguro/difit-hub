@@ -26,6 +26,7 @@ async function fixture(): Promise<Fixture> {
       DIFIT_HUB_PORTS: '5966-5969',
       DIFIT_HUB_WEB_PORT: '5965',
       XDG_CONFIG_HOME: `${dir}/config`,
+      XDG_STATE_HOME: `${dir}/state`,
       MOCK_LOG: `${dir}/calls.log`,
       MOCK_SERVED: `${dir}/served`,
       PATH: `${mocks}:${Deno.env.get('PATH')}`,

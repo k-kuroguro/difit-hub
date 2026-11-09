@@ -13,6 +13,8 @@ export const PORT_RANGE = `${first}-${last}`;
 
 export const WEB_PORT = Number(env('DIFIT_HUB_WEB_PORT') ?? DEFAULT_WEB_PORT);
 
+export const STATE_DIR = `${env('XDG_STATE_HOME') ?? `${env('HOME')}/.local/state`}/difit-hub`;
+
 export const UNIT = 'difit-hub.service';
 export const UNIT_DIR = `${env('XDG_CONFIG_HOME') ?? `${env('HOME')}/.config`}/systemd/user`;
 export const UNIT_PATH = `${UNIT_DIR}/${UNIT}`;

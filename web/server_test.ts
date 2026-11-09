@@ -1,9 +1,10 @@
 import { assert, assertEquals, assertStringIncludes } from '@std/assert';
 
-import { handler } from './server.ts';
+import { Push } from './push.ts';
+import { handler, message, newServers } from './server.ts';
 
 const get = (path: string, servers?: () => Promise<unknown>) =>
-   handler(new Request(`http://127.0.0.1:4965${path}`), servers);
+   handler(new Request(`http://127.0.0.1:4965${path}`), servers && { servers });
 
 Deno.test('serves the app shell', async () => {
    for (
@@ -11,6 +12,7 @@ Deno.test('serves the app shell', async () => {
          ['/', 'text/html'],
          ['/app.css', 'text/css'],
          ['/app.js', 'text/javascript'],
+         ['/sw.js', 'text/javascript'],
          ['/manifest.webmanifest', 'application/manifest+json'],
       ]
    ) {
@@ -64,4 +66,64 @@ Deno.test('embedded Octicons are credited', async () => {
    assertStringIncludes(appIcon, 'Primer Octicons');
    const notices = await Deno.readTextFile(new URL('../THIRD_PARTY_NOTICES.md', import.meta.url));
    assertStringIncludes(notices, 'Copyright (c) 2026 GitHub Inc.');
+});
+
+const server = {
+   port: 4966,
+   pid: 1,
+   repo: '/home/u/repo',
+   target: '.',
+   label: 'uncommitted',
+   comments: 0,
+   url: '',
+   started: 0,
+};
+
+Deno.test('notifies only about servers it has not seen', () => {
+   const other = { ...server, port: 4967, pid: 2 };
+   assertEquals(newServers(new Set(['4966:1']), [server, other]), [other]);
+   assertEquals(message(other), { title: 'repo', body: 'New review: uncommitted', url: '/#4967' });
+});
+
+Deno.test('hands out the push key and saves subscriptions', async () => {
+   const dir = await Deno.makeTempDir();
+   try {
+      const push = new Push(dir);
+      const post = (body: unknown) =>
+         handler(
+            new Request('http://127.0.0.1:4965/api/push/subscriptions', { method: 'POST', body: JSON.stringify(body) }),
+            { push },
+         );
+      const { key } = await (await handler(new Request('http://127.0.0.1:4965/api/push/key'), { push })).json();
+      assertEquals(key, JSON.parse(await Deno.readTextFile(`${dir}/vapid.json`)).publicKey);
+
+      const subscription = { endpoint: 'https://push.example/1', keys: { p256dh: 'p', auth: 'a' } };
+      assertEquals((await post(subscription)).status, 201);
+      assertEquals((await post(subscription)).status, 201);
+      assertEquals((await post({ endpoint: 'http://insecure' })).status, 400);
+      assertEquals(JSON.parse(await Deno.readTextFile(`${dir}/subscriptions.json`)), [subscription]);
+   } finally {
+      await Deno.remove(dir, { recursive: true });
+   }
+});
+
+Deno.test('sends to every subscription and drops the ones that are gone', async () => {
+   const dir = await Deno.makeTempDir();
+   try {
+      const sent: string[] = [];
+      const push = new Push(dir, (s, payload) => {
+         sent.push(`${s.endpoint} ${payload}`);
+         return s.endpoint.endsWith('gone') ? Promise.reject({ statusCode: 410 }) : Promise.resolve();
+      });
+      for (const endpoint of ['https://push.example/kept', 'https://push.example/gone']) {
+         await push.subscribe({ endpoint, keys: { p256dh: 'p', auth: 'a' } });
+      }
+      await push.notify(message(server));
+      assertEquals(sent.length, 2);
+      assertStringIncludes(sent[0], '"url":"/#4966"');
+      const left = JSON.parse(await Deno.readTextFile(`${dir}/subscriptions.json`));
+      assertEquals(left.map((s: { endpoint: string }) => s.endpoint), ['https://push.example/kept']);
+   } finally {
+      await Deno.remove(dir, { recursive: true });
+   }
 });

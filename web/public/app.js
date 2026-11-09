@@ -1,6 +1,7 @@
 const list = document.getElementById('list');
 const review = document.getElementById('review');
 const here = document.getElementById('here');
+const notify = document.getElementById('notify');
 let servers = [];
 
 const frames = new Map();
@@ -9,14 +10,11 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 const icon = (id) => `<svg class="octicon" aria-hidden="true"><use href="#${id}"/></svg>`;
 const repoName = (s) => (s.repo ? s.repo.split('/').pop() : 'unknown repo');
 
-const keywords = { '.': 'uncommitted', working: 'unstaged', staged: 'staged' };
-const targetLabel = (t) => keywords[t] ?? (t || 'HEAD');
-
 function item(s) {
    const count = s.comments ?? '?';
    return `<li><a class="item" href="#${s.port}">
     ${icon('git-compare')}
-    <span class="name">${esc(repoName(s))}<span class="target">${esc(targetLabel(s.target))}</span></span>
+    <span class="name">${esc(repoName(s))}<span class="target">${esc(s.label)}</span></span>
     <span class="count${s.comments > 0 ? ' open' : ''}" aria-label="${esc(count)} unresolved comments">
       ${icon('comment')}${esc(count)}
     </span>
@@ -70,9 +68,49 @@ function route() {
    review.hidden = !s;
    const shown = s && frameFor(s);
    for (const frame of frames.values()) frame.hidden = frame !== shown;
-   if (s) here.textContent = `${repoName(s)} · ${targetLabel(s.target)}`;
+   if (s) here.textContent = `${repoName(s)} · ${s.label}`;
 }
 
+// The bell asks for permission and subscribes this device; iOS offers Web Push only in the home-screen app.
+async function setUpNotifications() {
+   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+   const registration = await navigator.serviceWorker.register('/sw.js');
+   const save = (subscription) =>
+      fetch('/api/push/subscriptions', {
+         method: 'POST',
+         headers: { 'content-type': 'application/json' },
+         body: JSON.stringify(subscription),
+      });
+
+   const existing = await registration.pushManager.getSubscription();
+   if (existing && Notification.permission === 'granted') {
+      await save(existing);
+      return;
+   }
+
+   notify.hidden = false;
+   notify.addEventListener('click', async () => {
+      if (await Notification.requestPermission() !== 'granted') return;
+      const { key } = await (await fetch('/api/push/key')).json();
+      const raw = atob(key.replace(/-/g, '+').replace(/_/g, '/'));
+      const subscription = await registration.pushManager.subscribe({
+         userVisibleOnly: true,
+         applicationServerKey: Uint8Array.from(raw, (c) => c.charCodeAt(0)),
+      });
+      await save(subscription);
+      notify.hidden = true;
+   });
+}
+
+// A tapped notification for a review that started after the last refresh.
+navigator.serviceWorker?.addEventListener('message', async (event) => {
+   if (!event.data?.open) return;
+   await refresh();
+   location.hash = new URL(event.data.open).hash;
+   route();
+});
+
 refresh().then(route);
+setUpNotifications();
 addEventListener('hashchange', route);
 setInterval(() => document.hidden || !review.hidden || refresh(), 5000);
