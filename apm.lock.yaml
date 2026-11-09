@@ -1,0 +1,14 @@
+lockfile_version: '1'
+apm_version: 0.35.0
+dependencies:
+- repo_url: pbakaus/impeccable
+  name: impeccable
+  host: github.com
+  resolved_commit: 414603bf14c7a344edb466bb1f85690c77ce8b7d
+  resolved_ref: skill-v4.8.0
+  version: unknown
+  virtual_path: .claude/skills/impeccable
+  is_virtual: true
+  package_type: claude_skill
+  content_hash: sha256:39342a222ea755ea18150efcb346f11f4bff653f26b3805c46e1cf882bf97aac
+deployments: []

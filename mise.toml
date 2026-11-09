@@ -1,0 +1,25 @@
+[tools]
+"core:deno" = "2.9.8"
+
+[tasks.test]
+depends = ["test:unit", "test:integration"]
+
+[tasks."test:unit"]
+run = "deno test --allow-all cli/ lib/ web/"
+
+[tasks."test:integration"]
+run = "deno test --allow-all tests/"
+
+[tasks.fmt]
+run = "deno fmt"
+
+[tasks.icons]
+run = "deno run --allow-read --allow-write=web/public --allow-env scripts/icons.ts"
+
+[tasks.dev]
+run = "deno run --watch --allow-all web/server.ts"
+env = { DIFIT_HUB_WEB_PORT = "4985" }
+
+[tasks.setup]
+depends = ["icons"]
+run = "apm install"

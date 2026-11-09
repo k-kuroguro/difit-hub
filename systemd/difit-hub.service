@@ -1,0 +1,18 @@
+[Unit]
+Description=Live list of running difit servers
+After=default.target
+StartLimitIntervalSec=0
+ConditionPathExists=@ROOT@/web/server.ts
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/env deno run --allow-all @ROOT@/web/server.ts
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+Environment=PATH=%h/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin
+Environment=DIFIT_HUB_WEB_PORT=@WEB_PORT@
+Environment=DIFIT_HUB_PORTS=@PORTS@
+
+[Install]
+WantedBy=default.target

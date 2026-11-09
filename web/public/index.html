@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+      <title>Diff viewer</title>
+      <link rel="manifest" href="/manifest.webmanifest">
+      <link rel="apple-touch-icon" href="/icon-180.png">
+      <link rel="stylesheet" href="/app.css">
+      <meta name="apple-mobile-web-app-capable" content="yes">
+      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+      <meta name="apple-mobile-web-app-title" content="Diff viewer">
+      <meta name="theme-color" content="#161b22">
+      <script src="/app.js" defer></script>
+   </head>
+   <body>
+      <!-- Icons: Primer Octicons, Copyright (c) GitHub Inc., MIT License. See THIRD_PARTY_NOTICES.md. -->
+      <svg aria-hidden="true" style="position: absolute; width: 0; height: 0; overflow: hidden">
+         <symbol id="chevron-left" viewBox="0 0 16 16">
+            <path
+               d="M9.78 12.78a.75.75 0 0 1-1.06 0L4.47 8.53a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L6.06 8l3.72 3.72a.75.75 0 0 1 0 1.06Z" />
+         </symbol>
+         <symbol id="git-compare" viewBox="0 0 16 16">
+            <path
+               d="M9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM6 12v-1.646a.25.25 0 0 1 .427-.177l2.396 2.396a.25.25 0 0 1 0 .354l-2.396 2.396A.25.25 0 0 1 6 15.146V13.5H5A2.5 2.5 0 0 1 2.5 11V5.372a2.25 2.25 0 1 1 1.5 0V11a1 1 0 0 0 1 1ZM4 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0ZM12.75 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z" />
+         </symbol>
+         <symbol id="comment" viewBox="0 0 16 16">
+            <path
+               d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 13.25 12H9.06l-2.573 2.573A1.458 1.458 0 0 1 4 13.543V12H2.75A1.75 1.75 0 0 1 1 10.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h4.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
+         </symbol>
+      </svg>
+
+      <header class="bar">
+         <h1>Diff viewer</h1>
+      </header>
+
+      <main>
+         <ul class="list" id="list" aria-live="polite"></ul>
+      </main>
+
+      <div class="review" id="review" hidden>
+         <header class="bar">
+            <a class="back"
+               href="#"><svg class="octicon" aria-hidden="true"><use href="#chevron-left"/></svg>Reviews</a>
+            <span class="here" id="here"></span>
+         </header>
+      </div>
+   </body>
+</html>

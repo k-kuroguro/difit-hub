@@ -1,0 +1,10 @@
+# apm: dependencies and what `apm install` deploys for agents.
+/.agents/skills/
+/.apm-local/
+/.claude/skills/
+/.codex/
+/.mcp.json
+/apm_modules/
+
+# icons: what `mise run icons` renders from web/public/icon.svg.
+/web/public/icon-*.png

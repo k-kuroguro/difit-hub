@@ -1,0 +1,5 @@
+#!/usr/bin/env -S deno run --allow-all --quiet
+
+import { main } from "@/cli/main.ts";
+
+Deno.exit(await main(Deno.args));

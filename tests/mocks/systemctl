@@ -1,0 +1,3 @@
+#!/usr/bin/env -S deno run --allow-all --quiet
+
+await Deno.writeTextFile(Deno.env.get('MOCK_LOG'), `systemctl ${Deno.args.join(' ')}\n`, { append: true });

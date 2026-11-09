@@ -1,0 +1,18 @@
+#!/usr/bin/env -S deno run --allow-all --quiet
+
+const args = Deno.args;
+await Deno.writeTextFile(Deno.env.get('MOCK_LOG'), `tailscale ${args.join(' ')}\n`, { append: true });
+const file = Deno.env.get('MOCK_SERVED');
+const served = (await Deno.readTextFile(file).catch(() => '')).split('\n').filter(Boolean);
+const save = (ports) => Deno.writeTextFile(file, ports.map((p) => `${p}\n`).join(''));
+const port = (opt) => opt.slice('--https='.length);
+
+if (args.join(' ') === 'status --self --json') {
+   console.log(JSON.stringify({ Self: { DNSName: 'host.example.ts.net.' } }));
+} else if (args.join(' ') === 'serve status --json') {
+   console.log(JSON.stringify({ TCP: Object.fromEntries(served.map((p) => [p, { HTTPS: true }])) }));
+} else if (args[0] === 'serve' && args[1] === '--bg') {
+   await save([...served, port(args[2])]);
+} else if (args[0] === 'serve' && args[2] === 'off') {
+   await save(served.filter((p) => p !== port(args[1])));
+}
