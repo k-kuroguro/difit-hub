@@ -1,6 +1,9 @@
 ---
 name: difit-hub
-description: How to run difit when the `difit` command is the difit-hub wrapper, which publishes each review on the user's tailnet so they can review from a phone. Use together with the difit and difit-review skills whenever one of them starts, reads, or stops a difit server and `difit --help` starts with "Usage: difit ls|stop|uninstall".
+description: >-
+  How to run difit when the `difit` command is the difit-hub wrapper, which publishes each review on the user's tailnet
+  so they can review from a phone. Use together with the difit and difit-review skills whenever one of them starts,
+  reads, or stops a difit server and `difit --help` starts with "Usage: difit ls|stop|uninstall".
 ---
 
 # difit-hub
