@@ -17,7 +17,14 @@ run = "deno fmt"
 run = "deno run --allow-read --allow-write=web/public --allow-env scripts/icons.ts"
 
 [tasks.dev]
-run = "deno run --watch --allow-all web/server.ts"
+# Published on the tailnet while it runs, so the phone can open it too.
+run = """
+tailscale serve --bg --https="$DIFIT_HUB_WEB_PORT" "http://127.0.0.1:$DIFIT_HUB_WEB_PORT" >/dev/null
+trap 'tailscale serve --https="$DIFIT_HUB_WEB_PORT" off >/dev/null' EXIT
+trap 'exit 130' INT TERM
+echo "dev: https://$(tailscale status --self --json | jq -r '.Self.DNSName | rtrimstr(".")'):$DIFIT_HUB_WEB_PORT/"
+deno run --watch --allow-all web/server.ts
+"""
 env = { DIFIT_HUB_WEB_PORT = "4985" }
 
 [tasks.setup]
