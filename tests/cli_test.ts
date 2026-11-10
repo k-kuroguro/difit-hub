@@ -52,9 +52,15 @@ Deno.test("--help shows the wrapper's help, then difit's", () =>
    withFixture(async (f) => {
       const res = await difit(f, '--help');
       assertEquals(res.code, 0);
-      assert(res.stdout.startsWith('Usage: difit ls|stop|uninstall'), res.stdout);
+      assert(res.stdout.startsWith('Usage: difit ls|request|wait|stop|uninstall'), res.stdout);
       assertStringIncludes(res.stdout, '  uninstall  ');
       assert(res.stdout.indexOf('DIFIT_HUB_WEB_PORT') < res.stdout.indexOf('Usage: difit [options]'));
+   }));
+
+Deno.test('--hub tells the wrapper from difit itself', () =>
+   withFixture(async (f) => {
+      const res = await difit(f, '--hub');
+      assertEquals([res.code, res.stdout], [0, 'difit-hub\n']);
    }));
 
 Deno.test('ls with no servers prints only the header, and [] as JSON', () =>

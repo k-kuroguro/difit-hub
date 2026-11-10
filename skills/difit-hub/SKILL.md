@@ -3,7 +3,7 @@ name: difit-hub
 description: >-
   How to run difit when the `difit` command is the difit-hub wrapper, which publishes each review on the user's tailnet
   so they can review from a phone. Use together with the difit and difit-review skills whenever one of them starts,
-  reads, or stops a difit server and `difit --help` starts with "Usage: difit ls|stop|uninstall".
+  reads, or stops a difit server and `difit --hub` prints "difit-hub".
 ---
 
 # difit-hub
@@ -11,8 +11,8 @@ description: >-
 On this machine `difit` is the difit-hub wrapper around difit. Each review gets a free port published on the user's tailnet, and a web app lists the running reviews so the user can open them from their phone. 
 The difit and difit-review skills still decide when to open a review and how to write comments. This skill covers starting, finding, and stopping servers.
 
-Check that the wrapper is installed with `difit --help`: its first line is `Usage: difit ls|stop|uninstall [options]`.
-If it is not, ignore this skill.
+Check that the wrapper is installed with `difit --hub`: it prints `difit-hub`. difit itself fails with
+`unknown option '--hub'`; in that case, ignore this skill.
 
 ## Starting a review
 

@@ -8,18 +8,19 @@ import { publish, unpublish, urlOf } from '@/lib/tailscale.ts';
 
 import { ensureService, removeService } from './service.ts';
 
-const help = `Usage: difit ls|stop|uninstall [options]
+const help = `Usage: difit ls|request|wait|stop|uninstall [options]
 
 difit wrapper that runs difit and publishes each review on the tailnet
 
 Commands:
   ls [--json]          list running reviews
   request --port N [message]
-                       ask the user to review it; their phone gets a notification
+                       ask the user to review it, with a notification
   wait --port N [--timeout S]
-                       wait until the user marks it done, then print its comments
+                       wait until the user is done, then print the comments
   stop --port N|--all  print a server's remaining comments, then stop it
   uninstall            stop every server and remove the systemd service
+  --hub                print "difit-hub", to tell this wrapper from difit
 
 Environment:
   DIFIT_HUB_PORTS      ports for reviews (default: "${DEFAULT_PORTS}")
@@ -228,6 +229,10 @@ export async function main(args: string[]): Promise<number> {
 
          case 'uninstall':
             await uninstall();
+            return 0;
+
+         case '--hub':
+            console.log('difit-hub');
             return 0;
 
          case '-h':
