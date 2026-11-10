@@ -88,7 +88,11 @@ async function refresh() {
          ? servers.map(item).join('')
          : `<li class="note">No reviews running. Start one with <code>difit .</code> in a repository.</li>`;
    } catch (e) {
-      list.innerHTML = `<li class="note">Couldn’t load the reviews: ${esc(e.message)}</li>`;
+      // fetch rejects with a TypeError only when the request never reached the server.
+      const why = e instanceof TypeError
+         ? 'Can’t reach the PC running difit-hub. Check that it is on and on your tailnet.'
+         : `Couldn’t load the reviews: ${esc(e.message)}`;
+      list.innerHTML = `<li class="note">${why}</li>`;
    }
 }
 
