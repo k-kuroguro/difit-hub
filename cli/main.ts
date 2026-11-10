@@ -3,7 +3,7 @@ import { delay } from '@std/async';
 import { optValue } from '@/lib/args.ts';
 import { DEFAULT_PORTS, DEFAULT_WEB_PORT, DIFIT_VERSION, PORT_RANGE, PORTS, WEB_PORT } from '@/lib/config.ts';
 import { listeners, listServers, runningServers, serverPid, serverRoot, stopServer } from '@/lib/servers.ts';
-import { requestReview, serverKey } from '@/lib/requests.ts';
+import { readRequests, requestReview, serverKey } from '@/lib/requests.ts';
 import { publish, unpublish, urlOf } from '@/lib/tailscale.ts';
 
 import { ensureService, removeService } from './service.ts';
@@ -16,6 +16,8 @@ Commands:
   ls [--json]          list running reviews
   request --port N [message]
                        ask the user to review it; their phone gets a notification
+  wait --port N [--timeout S]
+                       wait until the user marks it done, then print its comments
   stop --port N|--all  print a server's remaining comments, then stop it
   uninstall            stop every server and remove the systemd service
 
@@ -111,6 +113,29 @@ async function request(args: string[]): Promise<void> {
    console.error(`asked for a review of port ${port}; the phone gets a notification`);
 }
 
+/**
+ * Waits until the user marks the requested review done, then prints its comments. Fails when the server stops first
+ * and exits with 124, as timeout(1) does, when --timeout seconds pass.
+ */
+async function wait(args: string[]): Promise<number> {
+   const port = Number(optValue(args, '--port'));
+   if (!port) throw new Exit(1, 'usage: difit wait --port N [--timeout S]');
+   const pid = await serverPid(port);
+   if (!pid) throw new Exit(1, `no server on port ${port}`);
+   const key = serverKey(port, pid);
+   if (!(await readRequests())[key]) throw new Exit(1, `no review requested for port ${port}; see difit request`);
+
+   const timeout = Number(optValue(args, '--timeout') ?? Infinity);
+   const until = Date.now() + timeout * 1000;
+   console.error(`waiting for the review of port ${port} to be done`);
+   while (!(await readRequests())[key]?.done) {
+      if (await serverPid(port).catch(() => undefined) !== pid) throw new Exit(1, `the server on port ${port} stopped`);
+      if (Date.now() > until) throw new Exit(124, `still not reviewed after ${timeout}s`);
+      await delay(2000);
+   }
+   return await difit(['comment', 'get', '--port', String(port)]);
+}
+
 async function uninstall(): Promise<void> {
    await stop(['--all']);
    await removeService();
@@ -197,6 +222,9 @@ export async function main(args: string[]): Promise<number> {
          case 'request':
             await request(args.slice(1));
             return 0;
+
+         case 'wait':
+            return await wait(args.slice(1));
 
          case 'uninstall':
             await uninstall();

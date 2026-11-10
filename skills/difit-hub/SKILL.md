@@ -41,8 +41,16 @@ The user's phone gets a notification, and the review shows as "Review needed" in
 Write the message in the language the user is using. Request again after you change the code in answer to their
 comments; the same server picks up the changes.
 
-To see whether the user has finished, check the review's `request.done` in `difit ls --json`: it is a time once they
-mark it done, and null until then. Read their comments after that, or when they tell you they are done.
+Then wait for the user to finish. If you can run a command in the background and get woken when it exits (Claude
+Code's Bash tool with `run_in_background`, for example), run:
+
+```bash
+difit wait --port <port>
+```
+
+It exits once the user marks the review done and prints their comments; it fails if the server stops first. Address
+the comments when it wakes you. If you cannot run it in the background, do not run it in the foreground: end your
+turn, ask the user to tell you when they are done, and then read the comments with `difit comment get`.
 
 ## Reusing a running review
 

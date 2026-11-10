@@ -134,9 +134,16 @@ Deno.test('start, list, comment, and stop reviews', () =>
          }
          assertEquals(listed.length, 2);
 
-         // The user marks the requested review done from the web app.
+         // The user marks the requested review done from the web app, and the agent waiting on it gets the comments.
+         assertEquals((await difit(f, 'wait', '--port', '5967')).code, 1);
+         assertEquals((await difit(f, 'wait', '--port', '5966', '--timeout', '1')).code, 124);
+         const waiting = difit(f, 'wait', '--port', '5966').spawn();
+         await delay(500);
          const done = await fetch('http://127.0.0.1:5965/api/servers/5966/done', { method: 'POST' });
          assertEquals(done.status, 204);
+         const waited = await waiting;
+         assertEquals(waited.code, 0, waited.stderr);
+         assertStringIncludes(waited.stdout, 'looks off');
          const after = JSON.parse((await difit(f, 'ls', '--json')).stdout);
          assert(after.find((s: { port: number }) => s.port === 5966).request.done !== null);
 
