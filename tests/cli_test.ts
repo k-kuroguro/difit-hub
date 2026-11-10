@@ -61,7 +61,7 @@ Deno.test('ls with no servers prints only the header, and [] as JSON', () =>
    withFixture(async (f) => {
       const table = await difit(f, 'ls');
       assertEquals(table.code, 0);
-      assertEquals(table.stdout, 'PORT\tCOMMENTS\tREPO\tTARGET\tURL\n');
+      assertEquals(table.stdout, 'PORT\tCOMMENTS\tREVIEW\tREPO\tTARGET\tURL\n');
       assertEquals(JSON.parse((await difit(f, 'ls', '--json')).stdout), []);
    }));
 
@@ -104,12 +104,21 @@ Deno.test('start, list, comment, and stop reviews', () =>
       assertEquals(res.code, 1);
       assertStringIncludes(res.stderr, 'port 5966 is in use');
 
+      res = await difit(f, 'request', '--port', '5966', 'check', 'a.txt');
+      assertEquals(res.code, 0, res.stderr);
+      assertEquals((await difit(f, 'request', '--port', '5968')).code, 1);
+
       const thread = { type: 'thread', filePath: 'a.txt', position: { side: 'new', line: 3 }, body: 'looks off' };
       assertEquals((await difit(f, 'comment', 'add', '--port', '5966', JSON.stringify(thread))).code, 0);
       const list = JSON.parse((await difit(f, 'ls', '--json')).stdout);
       assertEquals(list.length, 2);
       const first = list.find((s: { port: number }) => s.port === 5966);
-      assertEquals([first.target, first.comments], ['.', 1]);
+      assertEquals([first.target, first.comments, first.request.message, first.request.done], [
+         '.',
+         1,
+         'check a.txt',
+         null,
+      ]);
 
       const exec = unit.match(/^ExecStart=\/usr\/bin\/env deno (.*)$/m)![1].split(' ');
       const web = new Deno.Command(Deno.execPath(), { args: exec, env: f.env, stdout: 'null', stderr: 'null' })
@@ -124,6 +133,12 @@ Deno.test('start, list, comment, and stop reviews', () =>
             listed = await answer.json();
          }
          assertEquals(listed.length, 2);
+
+         // The user marks the requested review done from the web app.
+         const done = await fetch('http://127.0.0.1:5965/api/servers/5966/done', { method: 'POST' });
+         assertEquals(done.status, 204);
+         const after = JSON.parse((await difit(f, 'ls', '--json')).stdout);
+         assert(after.find((s: { port: number }) => s.port === 5966).request.done !== null);
 
          // Stopping from the web app frees the port and unpublishes it.
          const stopped = await fetch('http://127.0.0.1:5965/api/servers/5967/stop', { method: 'POST' });

@@ -29,6 +29,21 @@ The review also appears in the review list, whose URL the command prints to stde
 Do not pass `--host`. The wrapper binds to 127.0.0.1 and publishes the port itself.
 Leave out `--port` too, unless the user asks for one; the wrapper picks the first free port in `DIFIT_HUB_PORTS`.
 
+## Requesting the review
+
+Starting a server does not tell the user anything. When you want them to review, request it:
+
+```bash
+difit request --port <port> "<what to look at, in one line>"
+```
+
+The user's phone gets a notification, and the review shows as "Review needed" in the review list until they mark it done.
+Write the message in the language the user is using. Request again after you change the code in answer to their
+comments; the same server picks up the changes.
+
+To see whether the user has finished, check the review's `request.done` in `difit ls --json`: it is a time once they
+mark it done, and null until then. Read their comments after that, or when they tell you they are done.
+
 ## Reusing a running review
 
 The wrapper starts a new server every time, even for a review that is already running.

@@ -3,6 +3,7 @@ import { delay } from '@std/async';
 
 import { targetLabel, targets } from './args.ts';
 import { PORTS } from './config.ts';
+import { readRequests, type ReviewRequest, serverKey } from './requests.ts';
 import { unpublish, urlOf } from './tailscale.ts';
 
 export interface Server {
@@ -14,6 +15,7 @@ export interface Server {
    comments: number | null;
    url: string;
    started: number; // Unix seconds
+   request: ReviewRequest | null;
 }
 
 export async function listeners(port: number): Promise<string> {
@@ -80,6 +82,7 @@ async function commentCount(port: number): Promise<number | null> {
 
 export async function listServers(): Promise<Server[]> {
    const servers = [];
+   const requests = await readRequests();
    for (const [port, pid] of await runningServers()) {
       const target = targets(await serverArgs(pid)).join(' ');
       const elapsed = Number(await $`ps -o etimes= -p ${pid}`.text());
@@ -92,6 +95,7 @@ export async function listServers(): Promise<Server[]> {
          comments: await commentCount(port),
          url: await urlOf(port),
          started: Math.floor(Date.now() / 1000) - elapsed,
+         request: requests[serverKey(port, pid)] ?? null,
       });
    }
    return servers;

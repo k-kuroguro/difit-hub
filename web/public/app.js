@@ -2,6 +2,7 @@ const list = document.getElementById('list');
 const review = document.getElementById('review');
 const here = document.getElementById('here');
 const notify = document.getElementById('notify');
+const done = document.getElementById('done');
 let servers = [];
 
 const frames = new Map();
@@ -10,14 +11,19 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 const icon = (id) => `<svg class="octicon" aria-hidden="true"><use href="#${id}"/></svg>`;
 const repoName = (s) => (s.repo ? s.repo.split('/').pop() : 'unknown repo');
 
+const needsReview = (s) => s.request && !s.request.done;
+
 function item(s) {
    const count = s.comments ?? '?';
    return `<li class="row"><a class="item" href="#${s.port}">
     ${icon('git-compare')}
-    <span class="name">${esc(repoName(s))}<span class="target">${esc(s.label)}</span></span>
+    <span class="name">${esc(repoName(s))}<span class="target">${esc(s.label)}</span>${
+      needsReview(s) ? '<span class="needed">Review needed</span>' : ''
+   }</span>
     <span class="count${s.comments > 0 ? ' open' : ''}" aria-label="${esc(count)} unresolved comments">
       ${icon('comment')}${esc(count)}
     </span>
+    ${s.request?.message && needsReview(s) ? `<span class="ask">${esc(s.request.message)}</span>` : ''}
     <span class="meta">${esc((s.repo || '').replace(/^\/home\/[^/]+/, '~'))} · port ${s.port}</span>
   </a><button class="stop" type="button" data-port="${s.port}" aria-label="Stop ${esc(repoName(s))} ${esc(s.label)}">
     ${icon('x')}
@@ -40,6 +46,15 @@ list.addEventListener('click', async (event) => {
    const res = await fetch(`/api/servers/${s.port}/stop`, { method: 'POST' });
    if (!res.ok && res.status !== 404) alert(`Couldn’t stop the review: ${await res.text()}`);
    await refresh();
+});
+
+done.addEventListener('click', async () => {
+   done.disabled = true;
+   const res = await fetch(`/api/servers/${done.dataset.port}/done`, { method: 'POST' });
+   if (!res.ok) alert(`Couldn’t mark the review done: ${await res.text()}`);
+   await refresh();
+   route();
+   done.disabled = false;
 });
 
 async function refresh() {
@@ -89,6 +104,8 @@ function route() {
    const shown = s && frameFor(s);
    for (const frame of frames.values()) frame.hidden = frame !== shown;
    if (s) here.textContent = `${repoName(s)} · ${s.label}`;
+   done.hidden = !(s && needsReview(s));
+   done.dataset.port = s ? s.port : '';
 }
 
 // The bell asks for permission and subscribes this device; iOS offers Web Push only in the home-screen app.

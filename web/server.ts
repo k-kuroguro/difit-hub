@@ -1,7 +1,8 @@
 import { delay } from '@std/async';
 
 import { PORTS, WEB_PORT } from '@/lib/config.ts';
-import { ForeignPort, listServers, type Server, stopServer } from '@/lib/servers.ts';
+import { markDone, serverKey } from '@/lib/requests.ts';
+import { ForeignPort, listServers, type Server, serverPid, stopServer } from '@/lib/servers.ts';
 
 import { Push } from './push.ts';
 
@@ -19,13 +20,20 @@ const files: Record<string, [string, string]> = {
 export interface Deps {
    servers: () => Promise<unknown>;
    stop: (port: number) => Promise<boolean>;
+   done: (port: number) => Promise<boolean>;
    push: Push;
 }
 
-const defaults: Deps = { servers: listServers, stop: stopServer, push: new Push() };
+/** Marks the review on a port as done. False when it has no request. */
+async function doneReview(port: number): Promise<boolean> {
+   const pid = await serverPid(port);
+   return pid !== undefined && await markDone(serverKey(port, pid));
+}
+
+const defaults: Deps = { servers: listServers, stop: stopServer, done: doneReview, push: new Push() };
 
 export async function handler(req: Request, deps: Partial<Deps> = {}): Promise<Response> {
-   const { servers, stop, push } = { ...defaults, ...deps };
+   const { servers, stop, done, push } = { ...defaults, ...deps };
    const { pathname } = new URL(req.url);
 
    if (pathname === '/api/servers') {
@@ -36,12 +44,13 @@ export async function handler(req: Request, deps: Partial<Deps> = {}): Promise<R
       }
    }
 
-   const stopping = pathname.match(/^\/api\/servers\/(\d+)\/stop$/);
-   if (stopping && req.method === 'POST') {
-      const port = Number(stopping[1]);
+   const action = pathname.match(/^\/api\/servers\/(\d+)\/(stop|done)$/);
+   if (action && req.method === 'POST') {
+      const port = Number(action[1]);
       if (!PORTS.includes(port)) return new Response(`port ${port} is not a review port`, { status: 400 });
       try {
-         return new Response(null, { status: await stop(port) ? 204 : 404 });
+         const acted = action[2] === 'stop' ? await stop(port) : await done(port);
+         return new Response(null, { status: acted ? 204 : 404 });
       } catch (e) {
          return new Response(String(e), { status: e instanceof ForeignPort ? 409 : 500 });
       }
@@ -67,28 +76,33 @@ export async function handler(req: Request, deps: Partial<Deps> = {}): Promise<R
    return new Response('not found', { status: 404 });
 }
 
-const serverKey = (s: Server) => `${s.port}:${s.pid}`;
+/** When each server's review was last requested, by `port:pid`. */
+export type Requested = Map<string, number>;
 
-/** The servers in `current` that are not in `known`. */
-export function newServers(known: Set<string>, current: Server[]): Server[] {
-   return current.filter((s) => !known.has(serverKey(s)));
+const requested = (servers: Server[]): Requested =>
+   new Map(servers.flatMap((s) => s.request ? [[serverKey(s.port, s.pid), s.request.requested]] : []));
+
+/** The servers whose review was requested, or requested again, since `known`. */
+export function newRequests(known: Requested, current: Server[]): Server[] {
+   return current.filter((s) => s.request && known.get(serverKey(s.port, s.pid)) !== s.request.requested);
 }
 
-/** The notification for a review that just started; tapping it opens that review in the web app. */
+/** The notification for a requested review; tapping it opens that review in the web app. */
 export function message(s: Server) {
-   return { title: s.repo.split('/').pop() || 'difit-hub', body: `New review: ${s.label}`, url: `/#${s.port}` };
+   const repo = s.repo.split('/').pop() || 'difit-hub';
+   return { title: `${repo} · ${s.label}`, body: s.request?.message || 'Review requested', url: `/#${s.port}` };
 }
 
-/** Notifies the subscribed phones about each review that starts while the web app runs. */
+/** Notifies the subscribed phones about each review requested while the web app runs. */
 async function watch(push: Push): Promise<never> {
-   let known: Set<string> | undefined;
+   let known: Requested | undefined;
    while (true) {
       try {
          const current = await listServers();
          if (known) {
-            for (const s of newServers(known, current)) await push.notify(message(s));
+            for (const s of newRequests(known, current)) await push.notify(message(s));
          }
-         known = new Set(current.map(serverKey));
+         known = requested(current);
       } catch (e) {
          console.error(e);
       }

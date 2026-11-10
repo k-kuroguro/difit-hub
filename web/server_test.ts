@@ -3,7 +3,7 @@ import { assert, assertEquals, assertStringIncludes } from '@std/assert';
 import { ForeignPort } from '@/lib/servers.ts';
 
 import { Push } from './push.ts';
-import { handler, message, newServers } from './server.ts';
+import { handler, message, newRequests } from './server.ts';
 
 const get = (path: string, servers?: () => Promise<unknown>) =>
    handler(new Request(`http://127.0.0.1:4965${path}`), servers && { servers });
@@ -79,12 +79,26 @@ const server = {
    comments: 0,
    url: '',
    started: 0,
+   request: null,
 };
 
-Deno.test('notifies only about servers it has not seen', () => {
-   const other = { ...server, port: 4967, pid: 2 };
-   assertEquals(newServers(new Set(['4966:1']), [server, other]), [other]);
-   assertEquals(message(other), { title: 'repo', body: 'New review: uncommitted', url: '/#4967' });
+Deno.test('notifies about requests it has not seen, including repeated ones', () => {
+   const asked = (requested: number, message = '') => ({ message, requested, done: null });
+   const plain = { ...server, port: 4968, pid: 3 };
+   const old = { ...server, request: asked(10) };
+   const again = { ...server, port: 4967, pid: 2, request: asked(20, 'check the parser') };
+   const known = new Map([['4966:1', 10], ['4967:2', 15]]);
+   assertEquals(newRequests(known, [plain, old, again]), [again]);
+   assertEquals(message(again), { title: 'repo · uncommitted', body: 'check the parser', url: '/#4967' });
+   assertEquals(message(old).body, 'Review requested');
+});
+
+Deno.test('marks a review done', async () => {
+   const done = (port: number) => Promise.resolve(port === 4966);
+   const post = (port: number) =>
+      handler(new Request(`http://127.0.0.1:4965/api/servers/${port}/done`, { method: 'POST' }), { done });
+   assertEquals((await post(4966)).status, 204);
+   assertEquals((await post(4967)).status, 404);
 });
 
 Deno.test('hands out the push key and saves subscriptions', async () => {

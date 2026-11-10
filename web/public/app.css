@@ -125,6 +125,23 @@ main {
    color: var(--text-muted);
    font: 12px var(--mono);
 }
+.needed {
+   display: inline-block;
+   margin-left: 6px;
+   white-space: nowrap;
+   padding: 1px 6px;
+   border: 1px solid #9e6a03;
+   border-radius: 6px;
+   color: #d29922;
+   font-size: 12px;
+   font-weight: 500;
+}
+.ask {
+   grid-column: 2 / -1;
+   color: var(--text);
+   font-size: 13px;
+   overflow-wrap: anywhere;
+}
 .count {
    display: inline-flex;
    align-items: center;
