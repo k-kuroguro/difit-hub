@@ -5,6 +5,7 @@ targets:
   - codex
 dependencies:
   apm:
+    - blader/humanizer#v3.1.0
     - pbakaus/impeccable/.claude/skills/impeccable#skill-v4.8.0
   mcp:
     - name: playwright
