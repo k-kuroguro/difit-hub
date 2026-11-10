@@ -13,6 +13,20 @@ const repoName = (s) => (s.repo ? s.repo.split('/').pop() : 'unknown repo');
 
 const needsReview = (s) => s.request && !s.request.done;
 
+function ago(seconds) {
+   const minutes = Math.floor((Date.now() / 1000 - seconds) / 60);
+   if (minutes < 1) return 'just now';
+   if (minutes < 60) return `${minutes} min ago`;
+   if (minutes < 60 * 24) return `${Math.floor(minutes / 60)} h ago`;
+   return `${Math.floor(minutes / 60 / 24)} d ago`;
+}
+
+// Reviews waiting for the user come first, the latest request on top; the rest keep their port order.
+const byUrgency = (a, b) =>
+   (needsReview(b) - needsReview(a)) ||
+   (needsReview(a) && b.request.requested - a.request.requested) ||
+   a.port - b.port;
+
 function item(s) {
    const count = s.comments ?? '?';
    return `<li class="row"><a class="item" href="#${s.port}">
@@ -24,7 +38,9 @@ function item(s) {
       ${icon('comment')}${esc(count)}
     </span>
     ${s.request?.message && needsReview(s) ? `<span class="ask">${esc(s.request.message)}</span>` : ''}
-    <span class="meta">${esc((s.repo || '').replace(/^\/home\/[^/]+/, '~'))} · port ${s.port}</span>
+    <span class="meta">${esc((s.repo || '').replace(/^\/home\/[^/]+/, '~'))} · port ${s.port}${
+      needsReview(s) ? ` · requested ${ago(s.request.requested)}` : ''
+   }</span>
   </a><button class="stop" type="button" data-port="${s.port}" aria-label="Stop ${esc(repoName(s))} ${esc(s.label)}">
     ${icon('x')}
   </button></li>`;
@@ -61,7 +77,7 @@ async function refresh() {
    try {
       const res = await fetch('/api/servers', { cache: 'no-store' });
       if (!res.ok) throw new Error(await res.text());
-      servers = await res.json();
+      servers = (await res.json()).sort(byUrgency);
       list.innerHTML = servers.length
          ? servers.map(item).join('')
          : `<li class="note">No reviews running. Start one with <code>difit .</code> in a repository.</li>`;
