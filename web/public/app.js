@@ -73,7 +73,7 @@ done.addEventListener('click', async () => {
    if (res.ok) {
       await refresh();
       location.hash = '';
-      route(); // hashchange fires later, after the spinner would already be gone
+      await route(); // hashchange fires later, after the spinner would already be gone
    } else {
       alert(`Couldn’t mark the review done: ${await res.text()}`);
    }
@@ -135,11 +135,33 @@ async function clearNotifications(port) {
    for (const n of await registration?.getNotifications({ tag: `/#${port}` }) ?? []) n.close();
 }
 
+const calm = matchMedia('(prefers-reduced-motion: reduce)');
+// The port on screen, or null for the list, as soon as a change starts, so a second route() for it (the hashchange
+// after a programmatic hash change) waits for that change instead of starting another.
+let showing;
+let moving = Promise.resolve();
+
 function route() {
    dropStoppedFrames();
    const s = servers.find((s) => `#${s.port}` === location.hash);
+   const next = s ? s.port : null;
+   // Opening or leaving a review slides like an iOS navigation push; the first paint and refreshes do not animate.
+   const switching = showing !== undefined && (next === null) !== (showing === null);
+   showing = next;
+   if (switching && document.startViewTransition && !calm.matches) {
+      document.documentElement.dataset.direction = s ? 'forward' : 'back';
+      // difit's frame stays out of the slide: laying it out mid-animation drops frames on the way in.
+      const transition = document.startViewTransition(() => show(s, false));
+      transition.ready.catch(() => {});
+      moving = transition.finished.then(() => s && show(s));
+      return moving;
+   }
+   return moving.then(() => show(s));
+}
+
+function show(s, withFrame = true) {
    review.hidden = !s;
-   const shown = s && frameFor(s);
+   const shown = s && withFrame && frameFor(s);
    for (const frame of frames.values()) frame.hidden = frame !== shown;
    if (s) {
       here.textContent = `${repoName(s)} · ${s.label}`;
@@ -152,7 +174,8 @@ function route() {
 // The bell asks for permission and subscribes this device; iOS offers Web Push only in the home-screen app.
 async function setUpNotifications() {
    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-   const registration = await navigator.serviceWorker.register('/sw.js');
+   const registration = await navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+   if (!registration) return;
    const save = (subscription) =>
       fetch('/api/push/subscriptions', {
          method: 'POST',

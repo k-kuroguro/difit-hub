@@ -258,3 +258,45 @@ main {
       animation-duration: 2.4s;
    }
 }
+
+/* Opening a review pushes it in from the right; going back slides it out (see route() in app.js). */
+::view-transition-old(root),
+::view-transition-new(root) {
+   animation-duration: 0.28s;
+   animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+:root[data-direction="forward"]::view-transition-new(root) {
+   animation-name: enter-from-right;
+}
+:root[data-direction="forward"]::view-transition-old(root) {
+   animation-name: leave-to-left;
+}
+:root[data-direction="back"]::view-transition-old(root) {
+   z-index: 1;
+   animation-name: leave-to-right;
+}
+:root[data-direction="back"]::view-transition-new(root) {
+   animation-name: enter-from-left;
+}
+@keyframes enter-from-right {
+   from {
+      transform: translateX(100%);
+   }
+}
+@keyframes leave-to-left {
+   to {
+      transform: translateX(-30%);
+      opacity: 0.6;
+   }
+}
+@keyframes leave-to-right {
+   to {
+      transform: translateX(100%);
+   }
+}
+@keyframes enter-from-left {
+   from {
+      transform: translateX(-30%);
+      opacity: 0.6;
+   }
+}
