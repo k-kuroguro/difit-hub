@@ -78,6 +78,9 @@ async function refresh() {
       const res = await fetch('/api/servers', { cache: 'no-store' });
       if (!res.ok) throw new Error(await res.text());
       servers = (await res.json()).sort(byUrgency);
+      const waiting = servers.filter(needsReview).length;
+      if (waiting) navigator.setAppBadge?.(waiting);
+      else navigator.clearAppBadge?.();
       list.innerHTML = servers.length
          ? servers.map(item).join('')
          : `<li class="note">No reviews running. Start one with <code>difit .</code> in a repository.</li>`;

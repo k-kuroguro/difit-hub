@@ -3,8 +3,11 @@
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
 self.addEventListener('push', (event) => {
-   const { title, body, url } = event.data.json();
-   event.waitUntil(self.registration.showNotification(title, { body, tag: url, data: { url } }));
+   const { title, body, url, badge } = event.data.json();
+   event.waitUntil(Promise.all([
+      self.registration.showNotification(title, { body, tag: url, data: { url } }),
+      self.navigator.setAppBadge?.(badge),
+   ]));
 });
 
 self.addEventListener('notificationclick', (event) => {

@@ -89,8 +89,8 @@ Deno.test('notifies about requests it has not seen, including repeated ones', ()
    const again = { ...server, port: 4967, pid: 2, request: asked(20, 'check the parser') };
    const known = new Map([['4966:1', 10], ['4967:2', 15]]);
    assertEquals(newRequests(known, [plain, old, again]), [again]);
-   assertEquals(message(again), { title: 'repo · uncommitted', body: 'check the parser', url: '/#4967' });
-   assertEquals(message(old).body, 'Review requested');
+   assertEquals(message(again, 2), { title: 'repo · uncommitted', body: 'check the parser', url: '/#4967', badge: 2 });
+   assertEquals(message(old, 1).body, 'Review requested');
 });
 
 Deno.test('marks a review done', async () => {
@@ -134,7 +134,7 @@ Deno.test('sends to every subscription and drops the ones that are gone', async 
       for (const endpoint of ['https://push.example/kept', 'https://push.example/gone']) {
          await push.subscribe({ endpoint, keys: { p256dh: 'p', auth: 'a' } });
       }
-      await push.notify(message(server));
+      await push.notify(message(server, 1));
       assertEquals(sent.length, 2);
       assertStringIncludes(sent[0], '"url":"/#4966"');
       const left = JSON.parse(await Deno.readTextFile(`${dir}/subscriptions.json`));

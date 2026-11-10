@@ -88,10 +88,13 @@ export function newRequests(known: Requested, current: Server[]): Server[] {
 }
 
 /** The notification for a requested review; tapping it opens that review in the web app. */
-export function message(s: Server) {
+export function message(s: Server, badge: number) {
    const repo = s.repo.split('/').pop() || 'difit-hub';
-   return { title: `${repo} · ${s.label}`, body: s.request?.message || 'Review requested', url: `/#${s.port}` };
+   const body = s.request?.message || 'Review requested';
+   return { title: `${repo} · ${s.label}`, body, url: `/#${s.port}`, badge };
 }
+
+const waiting = (servers: Server[]) => servers.filter((s) => s.request && !s.request.done).length;
 
 /** Notifies the subscribed phones about each review requested while the web app runs. */
 async function watch(push: Push): Promise<never> {
@@ -100,7 +103,7 @@ async function watch(push: Push): Promise<never> {
       try {
          const current = await listServers();
          if (known) {
-            for (const s of newRequests(known, current)) await push.notify(message(s));
+            for (const s of newRequests(known, current)) await push.notify(message(s, waiting(current)));
          }
          known = requested(current);
       } catch (e) {

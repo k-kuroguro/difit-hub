@@ -11,6 +11,8 @@ export interface Message {
    title: string;
    body: string;
    url: string;
+   /** Reviews waiting for the user, for the app icon's badge. */
+   badge: number;
 }
 
 interface Keys {
