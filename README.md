@@ -6,14 +6,14 @@
 
 ```sh
 difit .                        # review uncommitted changes; HEAD, staged, a range, or --pr also work
-difit . --background           # return right away; prints {"port":…,"url":…}
-difit ls                       # running reviews (--json for scripts)
-difit request --port 4966 "…"  # ask the user to review it: their phone gets a notification
-difit wait --port 4966         # wait until they mark it done, then print their comments
-difit comment get --port 4966  # difit's own subcommands work as usual
+difit . --background           # return right away and print {"port":…,"url":…}
+difit ls                       # list running reviews (--json for scripts)
+difit request --port 4966 "…"  # ask the user to review it, with a notification
+difit wait --port 4966         # wait until the user marks it done, then print the comments
+difit comment get --port 4966  # run difit's own subcommands as usual
 difit stop --port 4966         # print the review's remaining comments, then stop it
-difit stop --all
-difit uninstall                # stop everything, remove the service, unpublish the ports
+difit stop --all               # do the same for every review
+difit uninstall                # stop every review and remove the service
 ```
 
 Open `https://<machine>.<tailnet>.ts.net:4965/` on the phone and add it to the home screen.

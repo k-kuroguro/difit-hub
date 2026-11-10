@@ -103,7 +103,6 @@ export async function listServers(): Promise<Server[]> {
 
 const isFree = async (port: number) => (await listeners(port)) === '';
 
-/** Stops the difit server on a port and unpublishes the port. False when no server was running there. */
 export async function stopServer(port: number): Promise<boolean> {
    const pid = await serverPid(port);
    if (pid) {

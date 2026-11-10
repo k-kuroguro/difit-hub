@@ -2,7 +2,7 @@
 
 ## Primer Octicons
 
-The icons in `web/public/index.html` (bell, check, chevron-left, git-compare, comment, x) and the app icon (`web/public/icon.svg` and the PNGs rendered from it, git-compare) are from [Primer Octicons](https://github.com/primer/octicons), used under the MIT License:
+The icons in `web/public/index.html` (bell, check, chevron-left, git-compare, comment, x) and the git-compare app icon (`web/public/icon.svg` and the PNGs rendered from it) are from [Primer Octicons](https://github.com/primer/octicons), used under the MIT License:
 
 ```text
 MIT License

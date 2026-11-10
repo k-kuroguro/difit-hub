@@ -21,7 +21,6 @@ function ago(seconds) {
    return `${Math.floor(minutes / 60 / 24)} d ago`;
 }
 
-// Reviews waiting for the user come first, the latest request on top; the rest keep their port order.
 const byUrgency = (a, b) =>
    (needsReview(b) - needsReview(a)) ||
    (needsReview(a) && b.request.requested - a.request.requested) ||
@@ -45,7 +44,7 @@ function item(s) {
   </button></li>`;
 }
 
-// Stopping drops the review's unresolved comments, so a review with any asks first.
+// Stopping loses the review's unresolved comments, so ask first when it has any.
 list.addEventListener('click', async (event) => {
    const button = event.target.closest('.stop');
    if (!button) return;
@@ -72,19 +71,16 @@ done.addEventListener('click', async () => {
    if (res.ok) {
       await refresh();
       location.hash = '';
-      await route(); // hashchange fires later, after the spinner would already be gone
+      await route(); // hashchange would run it only after this handler, with the spinner already gone
    } else {
       alert(`Couldn’t mark the review done: ${await res.text()}`);
    }
-   // Only now: the spinner stays until the list is back, so the check never flashes in between.
+   // Only after the list is back, or the check mark shows for a moment.
    done.disabled = false;
    done.classList.remove('busy');
 });
 
-/**
- * Shortens a path the way the nvim statusline in k-kuroguro/dotfiles does (lua/utils/path.lua): the root and the last
- * component always stay, the middle becomes "…", and components come back from whichever side is shorter while it fits.
- */
+// Same algorithm as lua/utils/path.lua in k-kuroguro/dotfiles, so paths read the same in nvim and here.
 function shortenPath(path, fits) {
    if (fits(path)) return path;
    let prefix = '';
@@ -147,7 +143,7 @@ async function refresh() {
          : `Couldn’t load the reviews: ${esc(e.message)}`;
       list.innerHTML = `<li class="note">${why}</li>`;
    }
-   // Set from here rather than by :has(.list:empty), which WebKit does not always recheck after innerHTML changes.
+   // A class, not :has(.list:empty): WebKit does not always recheck :has() after innerHTML changes.
    list.parentElement.classList.remove('loading');
 }
 
@@ -178,15 +174,15 @@ function dropStoppedFrames() {
    }
 }
 
-// Notifications are tagged with the review's URL hash (see sw.js), so opening a review can clear its own.
+// sw.js tags each notification with its review's hash, so a review can clear its own.
 async function clearNotifications(port) {
    const registration = await navigator.serviceWorker?.getRegistration();
    for (const n of await registration?.getNotifications({ tag: `/#${port}` }) ?? []) n.close();
 }
 
 const calm = matchMedia('(prefers-reduced-motion: reduce)');
-// The port on screen, or null for the list, as soon as a change starts, so a second route() for it (the hashchange
-// after a programmatic hash change) waits for that change instead of starting another.
+// The port on screen, or null for the list. It changes as soon as a switch starts, so the route() call that follows a
+// programmatic hash change waits for that switch instead of starting another.
 let showing;
 let moving = Promise.resolve();
 
@@ -194,7 +190,6 @@ function route() {
    dropStoppedFrames();
    const s = servers.find((s) => `#${s.port}` === location.hash);
    const next = s ? s.port : null;
-   // Opening or leaving a review slides like an iOS navigation push; the first paint and refreshes do not animate.
    const switching = showing !== undefined && (next === null) !== (showing === null);
    showing = next;
    if (switching && document.startViewTransition && !calm.matches) {
@@ -220,7 +215,7 @@ function show(s, withFrame = true) {
    done.dataset.port = s ? s.port : '';
 }
 
-// The bell asks for permission and subscribes this device; iOS offers Web Push only in the home-screen app.
+// iOS offers Web Push only in the home-screen app, so in Safari the bell stays hidden.
 async function setUpNotifications() {
    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
    const registration = await navigator.serviceWorker.register('/sw.js').catch(() => undefined);
@@ -252,7 +247,7 @@ async function setUpNotifications() {
    });
 }
 
-// A tapped notification for a review that started after the last refresh.
+// Refresh first: the tapped review may have started after the last refresh.
 navigator.serviceWorker?.addEventListener('message', async (event) => {
    if (!event.data?.open) return;
    await refresh();
@@ -264,5 +259,5 @@ refresh().then(route);
 setUpNotifications();
 addEventListener('hashchange', route);
 setInterval(() => document.hidden || !review.hidden || refresh(), 5000);
-// iOS keeps the app suspended in the background, so its list is stale until the next tick without this.
+// iOS suspends the app in the background, so the list is stale when the app comes back.
 document.addEventListener('visibilitychange', () => document.hidden || refresh().then(route));

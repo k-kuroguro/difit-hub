@@ -1,5 +1,3 @@
-// Shows the notifications web/push.ts sends, and opens the review a tapped notification is about.
-
 // A copy of the app itself, so it still opens off the tailnet and can say the PC is out of reach.
 const shell = ['/', '/app.css', '/app.js', '/manifest.webmanifest', '/icon-180.png', '/icon-192.png', '/icon-512.png'];
 

@@ -8,11 +8,11 @@ description: >-
 
 # difit-hub
 
-On this machine `difit` is the difit-hub wrapper around difit. Each review gets a free port published on the user's tailnet, and a web app lists the running reviews so the user can open them from their phone. 
-The difit and difit-review skills still decide when to open a review and how to write comments. This skill covers starting, finding, and stopping servers.
+On this machine `difit` is the difit-hub wrapper around difit. Each review gets a free port published on the user's tailnet, and a web app lists the running reviews so the user can open them from their phone.
+The difit and difit-review skills still decide when to open a review and how to write comments. This skill covers running
+the servers and asking the user for reviews.
 
-Check that the wrapper is installed with `difit --hub`: it prints `difit-hub`. difit itself fails with
-`unknown option '--hub'`; in that case, ignore this skill.
+Check that the wrapper is installed with `difit --hub`: it prints `difit-hub`. difit itself fails with `unknown option '--hub'`; in that case, ignore this skill.
 
 ## Starting a review
 
@@ -41,16 +41,15 @@ The user's phone gets a notification, and the review shows as "Review needed" in
 Write the message in the language the user is using. Request again after you change the code in answer to their
 comments; the same server picks up the changes.
 
-Then wait for the user to finish. If you can run a command in the background and get woken when it exits (Claude
-Code's Bash tool with `run_in_background`, for example), run:
+Then wait for the user to finish. If you can run a command in the background and get woken when it exits (Claude Code's Bash tool with `run_in_background`, for example), run:
 
 ```bash
 difit wait --port <port>
 ```
 
-It exits once the user marks the review done and prints their comments; it fails if the server stops first. Address
-the comments when it wakes you. If you cannot run it in the background, do not run it in the foreground: end your
-turn, ask the user to tell you when they are done, and then read the comments with `difit comment get`.
+It exits once the user marks the review done and prints their comments; it fails if the server stops first.
+Address the comments when it wakes you. If you cannot run it in the background, do not run it in the foreground:
+end your turn, ask the user to tell you when they are done, and then read the comments with `difit comment get`.
 
 ## Reusing a running review
 

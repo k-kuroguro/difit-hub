@@ -73,8 +73,8 @@ main {
    border-radius: 6px;
    overflow: hidden;
 }
-/* Until the first refresh fills it, the empty list would show as a lone border line; a spinner stands in for it,
-   after a moment so that a quick load does not flash one. app.js drops the class once the list is in. */
+/* Before the first refresh the empty list would show as a lone border line. The spinner waits 0.3 s so a quick load
+   does not flash it. */
 main.loading .list {
    display: none;
 }
@@ -144,7 +144,6 @@ main.loading::after {
    color: var(--text-muted);
    font: 12px var(--mono);
 }
-/* A review an agent asked for: an amber edge, a status line, and its message set off like a quote. */
 .row.asked {
    box-shadow: inset 3px 0 0 var(--attention);
 }
@@ -193,8 +192,7 @@ main.loading::after {
    font-size: 12px;
    white-space: nowrap;
 }
-/* Only the path gives way on a narrow screen, shortened from the middle by fitPaths() in app.js; the port stays whole.
-   The ellipsis is for a last component too long to fit even alone. */
+/* fitPaths() in app.js shortens the path from the middle; the ellipsis is for a last component too long on its own. */
 .path {
    min-width: 0;
    overflow: hidden;
@@ -264,7 +262,6 @@ main.loading::after {
    visibility: hidden;
 }
 
-/* Feedback while a tap waits on the PC: a pressed button spins, a stopping row fades, a loading review shows a spinner. */
 @keyframes spin {
    to {
       transform: rotate(360deg);
@@ -305,7 +302,6 @@ main.loading::after {
    }
 }
 
-/* Opening a review pushes it in from the right; going back slides it out (see route() in app.js). */
 ::view-transition-old(root),
 ::view-transition-new(root) {
    animation-duration: 0.28s;

@@ -2,8 +2,8 @@ import { delay } from '@std/async';
 
 import { optValue } from '@/lib/args.ts';
 import { DEFAULT_PORTS, DEFAULT_WEB_PORT, DIFIT_VERSION, PORT_RANGE, PORTS, WEB_PORT } from '@/lib/config.ts';
-import { listeners, listServers, runningServers, serverPid, serverRoot, stopServer } from '@/lib/servers.ts';
 import { readRequests, requestReview, serverKey } from '@/lib/requests.ts';
+import { listeners, listServers, runningServers, serverPid, serverRoot, stopServer } from '@/lib/servers.ts';
 import { publish, unpublish, urlOf } from '@/lib/tailscale.ts';
 
 import { ensureService, removeService } from './service.ts';
@@ -13,18 +13,16 @@ const help = `Usage: difit ls|request|wait|stop|uninstall [options]
 difit wrapper that runs difit and publishes each review on the tailnet
 
 Commands:
-  ls [--json]          list running reviews
-  request --port N [message]
-                       ask the user to review it, with a notification
-  wait --port N [--timeout S]
-                       wait until the user is done, then print the comments
-  stop --port N|--all  print a server's remaining comments, then stop it
-  uninstall            stop every server and remove the systemd service
-  --hub                print "difit-hub", to tell this wrapper from difit
+  ls [--json]                  list running reviews
+  request --port N [message]   ask the user to review it, with a notification
+  wait --port N [--timeout S]  wait until the user is done, then print the comments
+  stop --port N|--all          print a server's remaining comments, then stop it
+  uninstall                    stop every server and remove the systemd service
+  --hub                        print "difit-hub", to tell this wrapper from difit
 
 Environment:
-  DIFIT_HUB_PORTS      ports for reviews (default: "${DEFAULT_PORTS}")
-  DIFIT_HUB_WEB_PORT   port of the review list (default: ${DEFAULT_WEB_PORT})
+  DIFIT_HUB_PORTS              ports for reviews (default: "${DEFAULT_PORTS}")
+  DIFIT_HUB_WEB_PORT           port of the review list (default: ${DEFAULT_WEB_PORT})
 
 difit's own help:
 `;
@@ -102,27 +100,26 @@ async function ls(args: string[]): Promise<void> {
    for (const row of rows) console.log(row.map((cell, i) => cell.padEnd(widths[i])).join('  ').trimEnd());
 }
 
-/** Asks the user to review a running server, with an optional message for them. */
 async function request(args: string[]): Promise<void> {
    const port = Number(optValue(args, '--port'));
    if (!port) throw new Exit(1, 'usage: difit request --port N [message]');
+
    const pid = await serverPid(port);
    if (!pid) throw new Exit(1, `no server on port ${port}`);
+
    const message = args.filter((a, i) => a !== '--port' && args[i - 1] !== '--port').join(' ');
    const running = new Set([...await runningServers()].map(([p, id]) => serverKey(p, id)));
    await requestReview(serverKey(port, pid), message, running);
    console.error(`asked for a review of port ${port}; the phone gets a notification`);
 }
 
-/**
- * Waits until the user marks the requested review done, then prints its comments. Fails when the server stops first
- * and exits with 124, as timeout(1) does, when --timeout seconds pass.
- */
 async function wait(args: string[]): Promise<number> {
    const port = Number(optValue(args, '--port'));
    if (!port) throw new Exit(1, 'usage: difit wait --port N [--timeout S]');
+
    const pid = await serverPid(port);
    if (!pid) throw new Exit(1, `no server on port ${port}`);
+
    const key = serverKey(port, pid);
    if (!(await readRequests())[key]) throw new Exit(1, `no review requested for port ${port}; see difit request`);
 

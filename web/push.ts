@@ -11,7 +11,6 @@ export interface Message {
    title: string;
    body: string;
    url: string;
-   /** Reviews waiting for the user, for the app icon's badge. */
    badge: number;
 }
 
@@ -22,7 +21,7 @@ interface Keys {
 
 type Send = (subscription: Subscription, payload: string, options: object) => Promise<unknown>;
 
-// Push services want a contact for the sender; the project page is one that names no person.
+// Push services require a sender contact; the project page gives one without naming a person.
 const SUBJECT = 'https://github.com/k-kuroguro/difit-hub';
 
 const readJson = <T>(path: string, fallback: T): Promise<T> =>
@@ -34,7 +33,6 @@ const isSubscription = (value: unknown): value is Subscription => {
       typeof s.keys?.p256dh === 'string' && typeof s.keys?.auth === 'string';
 };
 
-/** Web Push to the phones that turned on notifications, with the VAPID keys and subscriptions kept in `dir`. */
 export class Push {
    #dir: string;
    #send: Send;
@@ -67,7 +65,6 @@ export class Push {
       return (await this.#keys()).publicKey;
    }
 
-   /** Saves a browser's subscription, replacing an older one for the same endpoint. False when it is malformed. */
    async subscribe(subscription: unknown): Promise<boolean> {
       if (!isSubscription(subscription)) return false;
       const { endpoint, keys } = subscription;
@@ -76,7 +73,6 @@ export class Push {
       return true;
    }
 
-   /** Sends a message to every subscription, dropping the ones the push service says are gone. */
    async notify(message: Message): Promise<void> {
       const subscriptions = await this.#subscriptions();
       if (subscriptions.length === 0) return;

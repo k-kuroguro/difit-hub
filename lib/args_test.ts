@@ -10,11 +10,8 @@ Deno.test('reads targets and option values from a difit command line', () => {
 });
 
 Deno.test('labels keyword targets as words and leaves revisions as they are', () => {
-   assertEquals(['.', 'working', 'staged', '', 'HEAD~2'].map(targetLabel), [
-      'uncommitted',
-      'unstaged',
-      'staged',
-      'HEAD',
-      'HEAD~2',
-   ]);
+   assertEquals(
+      ['.', 'working', 'staged', '', 'HEAD~2'].map(targetLabel),
+      ['uncommitted', 'unstaged', 'staged', 'HEAD', 'HEAD~2'],
+   );
 });

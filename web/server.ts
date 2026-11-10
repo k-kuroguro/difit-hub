@@ -24,7 +24,6 @@ export interface Deps {
    push: Push;
 }
 
-/** Marks the review on a port as done. False when it has no request. */
 async function doneReview(port: number): Promise<boolean> {
    const pid = await serverPid(port);
    return pid !== undefined && await markDone(serverKey(port, pid));
@@ -76,18 +75,15 @@ export async function handler(req: Request, deps: Partial<Deps> = {}): Promise<R
    return new Response('not found', { status: 404 });
 }
 
-/** When each server's review was last requested, by `port:pid`. */
 export type Requested = Map<string, number>;
 
 const requested = (servers: Server[]): Requested =>
    new Map(servers.flatMap((s) => s.request ? [[serverKey(s.port, s.pid), s.request.requested]] : []));
 
-/** The servers whose review was requested, or requested again, since `known`. */
 export function newRequests(known: Requested, current: Server[]): Server[] {
    return current.filter((s) => s.request && known.get(serverKey(s.port, s.pid)) !== s.request.requested);
 }
 
-/** The notification for a requested review; tapping it opens that review in the web app. */
 export function message(s: Server, badge: number) {
    const repo = s.repo.split('/').pop() || 'difit-hub';
    const body = s.request?.message || 'Review requested';
@@ -96,7 +92,6 @@ export function message(s: Server, badge: number) {
 
 const waiting = (servers: Server[]) => servers.filter((s) => s.request && !s.request.done).length;
 
-/** Notifies the subscribed phones about each review requested while the web app runs. */
 async function watch(push: Push): Promise<never> {
    let known: Requested | undefined;
    while (true) {
