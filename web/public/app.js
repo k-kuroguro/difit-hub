@@ -151,3 +151,5 @@ refresh().then(route);
 setUpNotifications();
 addEventListener('hashchange', route);
 setInterval(() => document.hidden || !review.hidden || refresh(), 5000);
+// iOS keeps the app suspended in the background, so its list is stale until the next tick without this.
+document.addEventListener('visibilitychange', () => document.hidden || refresh().then(route));
