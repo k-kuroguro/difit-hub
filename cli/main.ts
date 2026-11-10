@@ -131,7 +131,7 @@ async function start(args: string[]): Promise<number> {
    const port = asked ? Number(asked) : await freePort();
    if (asked && !await isFree(port)) throw new Exit(1, `port ${port} is in use; see difit ls`);
 
-   await ensureService();
+   await ensureService().catch((e) => console.error(`could not set up the difit-hub service: ${e.message}`));
    const run = [...args];
    if (!args.includes('--host')) run.push('--host', '127.0.0.1');
    if (!asked) run.push('--port', String(port));
