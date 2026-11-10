@@ -1,8 +1,9 @@
 import $ from '@david/dax';
+import { delay } from '@std/async';
 
 import { targetLabel, targets } from './args.ts';
 import { PORTS } from './config.ts';
-import { urlOf } from './tailscale.ts';
+import { unpublish, urlOf } from './tailscale.ts';
 
 export interface Server {
    port: number;
@@ -94,4 +95,21 @@ export async function listServers(): Promise<Server[]> {
       });
    }
    return servers;
+}
+
+const isFree = async (port: number) => (await listeners(port)) === '';
+
+/** Stops the difit server on a port and unpublishes the port. False when no server was running there. */
+export async function stopServer(port: number): Promise<boolean> {
+   const pid = await serverPid(port);
+   if (pid) {
+      Deno.kill(pid);
+      for (let i = 0; i < 50 && !await isFree(port); i++) await delay(100);
+      if (!await isFree(port)) {
+         console.error(`pid ${pid} did not exit; sending SIGKILL`);
+         Deno.kill(pid, 'SIGKILL');
+      }
+   }
+   await unpublish(port);
+   return pid !== undefined;
 }

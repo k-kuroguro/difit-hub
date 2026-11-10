@@ -12,15 +12,35 @@ const repoName = (s) => (s.repo ? s.repo.split('/').pop() : 'unknown repo');
 
 function item(s) {
    const count = s.comments ?? '?';
-   return `<li><a class="item" href="#${s.port}">
+   return `<li class="row"><a class="item" href="#${s.port}">
     ${icon('git-compare')}
     <span class="name">${esc(repoName(s))}<span class="target">${esc(s.label)}</span></span>
     <span class="count${s.comments > 0 ? ' open' : ''}" aria-label="${esc(count)} unresolved comments">
       ${icon('comment')}${esc(count)}
     </span>
     <span class="meta">${esc((s.repo || '').replace(/^\/home\/[^/]+/, '~'))} · port ${s.port}</span>
-  </a></li>`;
+  </a><button class="stop" type="button" data-port="${s.port}" aria-label="Stop ${esc(repoName(s))} ${esc(s.label)}">
+    ${icon('x')}
+  </button></li>`;
 }
+
+// Stopping drops the review's unresolved comments, so a review with any asks first.
+list.addEventListener('click', async (event) => {
+   const button = event.target.closest('.stop');
+   if (!button) return;
+   const s = servers.find((s) => String(s.port) === button.dataset.port);
+   if (!s) return;
+   if (
+      s.comments > 0 &&
+      !confirm(`Stop ${repoName(s)} · ${s.label}? Its ${s.comments} unresolved comments will be lost.`)
+   ) {
+      return;
+   }
+   button.disabled = true;
+   const res = await fetch(`/api/servers/${s.port}/stop`, { method: 'POST' });
+   if (!res.ok && res.status !== 404) alert(`Couldn’t stop the review: ${await res.text()}`);
+   await refresh();
+});
 
 async function refresh() {
    try {

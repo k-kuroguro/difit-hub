@@ -75,15 +75,38 @@ main {
 .list li + li {
    border-top: 1px solid var(--border);
 }
+.row {
+   display: flex;
+   align-items: stretch;
+}
+.row:has(.item:active),
+.row:has(.item:hover) {
+   background: var(--bg-hover);
+}
 .item {
+   flex: 1;
+   min-width: 0;
    display: grid;
    grid-template-columns: 16px 1fr auto;
    gap: 2px 10px;
    padding: 12px 16px;
 }
-.item:active,
-.item:hover {
-   background: var(--bg-hover);
+.stop {
+   flex: none;
+   display: flex;
+   align-items: center;
+   padding: 0 16px;
+   border: 0;
+   border-left: 1px solid var(--border);
+   background: none;
+   color: var(--text-muted);
+}
+.stop:active,
+.stop:hover {
+   color: #f85149;
+}
+.stop:disabled {
+   opacity: 0.5;
 }
 .item > .octicon {
    margin-top: 2px;

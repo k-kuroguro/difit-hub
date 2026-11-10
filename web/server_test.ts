@@ -1,5 +1,7 @@
 import { assert, assertEquals, assertStringIncludes } from '@std/assert';
 
+import { ForeignPort } from '@/lib/servers.ts';
+
 import { Push } from './push.ts';
 import { handler, message, newServers } from './server.ts';
 
@@ -126,4 +128,15 @@ Deno.test('sends to every subscription and drops the ones that are gone', async 
    } finally {
       await Deno.remove(dir, { recursive: true });
    }
+});
+
+Deno.test('stops a review port and reports what happened', async () => {
+   const stop = (port: number) =>
+      port === 4967 ? Promise.reject(new ForeignPort('held by something else')) : Promise.resolve(port === 4966);
+   const post = (port: number) =>
+      handler(new Request(`http://127.0.0.1:4965/api/servers/${port}/stop`, { method: 'POST' }), { stop });
+   assertEquals((await post(4966)).status, 204);
+   assertEquals((await post(4968)).status, 404);
+   assertEquals((await post(4967)).status, 409);
+   assertEquals((await post(22)).status, 400);
 });

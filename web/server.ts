@@ -1,7 +1,7 @@
 import { delay } from '@std/async';
 
-import { WEB_PORT } from '@/lib/config.ts';
-import { listServers, type Server } from '@/lib/servers.ts';
+import { PORTS, WEB_PORT } from '@/lib/config.ts';
+import { ForeignPort, listServers, type Server, stopServer } from '@/lib/servers.ts';
 
 import { Push } from './push.ts';
 
@@ -18,13 +18,14 @@ const files: Record<string, [string, string]> = {
 
 export interface Deps {
    servers: () => Promise<unknown>;
+   stop: (port: number) => Promise<boolean>;
    push: Push;
 }
 
-const defaults: Deps = { servers: listServers, push: new Push() };
+const defaults: Deps = { servers: listServers, stop: stopServer, push: new Push() };
 
 export async function handler(req: Request, deps: Partial<Deps> = {}): Promise<Response> {
-   const { servers, push } = { ...defaults, ...deps };
+   const { servers, stop, push } = { ...defaults, ...deps };
    const { pathname } = new URL(req.url);
 
    if (pathname === '/api/servers') {
@@ -32,6 +33,17 @@ export async function handler(req: Request, deps: Partial<Deps> = {}): Promise<R
          return Response.json(await servers(), { headers: { 'cache-control': 'no-store' } });
       } catch (e) {
          return new Response(String(e), { status: 500 });
+      }
+   }
+
+   const stopping = pathname.match(/^\/api\/servers\/(\d+)\/stop$/);
+   if (stopping && req.method === 'POST') {
+      const port = Number(stopping[1]);
+      if (!PORTS.includes(port)) return new Response(`port ${port} is not a review port`, { status: 400 });
+      try {
+         return new Response(null, { status: await stop(port) ? 204 : 404 });
+      } catch (e) {
+         return new Response(String(e), { status: e instanceof ForeignPort ? 409 : 500 });
       }
    }
 

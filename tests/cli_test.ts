@@ -124,6 +124,12 @@ Deno.test('start, list, comment, and stop reviews', () =>
             listed = await answer.json();
          }
          assertEquals(listed.length, 2);
+
+         // Stopping from the web app frees the port and unpublishes it.
+         const stopped = await fetch('http://127.0.0.1:5965/api/servers/5967/stop', { method: 'POST' });
+         assertEquals(stopped.status, 204);
+         assertEquals(JSON.parse((await difit(f, 'ls', '--json')).stdout).map((s: { port: number }) => s.port), [5966]);
+         assert(!(await served(f)).includes('5967'));
       } finally {
          web.kill();
          await web.status;

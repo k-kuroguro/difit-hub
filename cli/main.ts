@@ -2,7 +2,7 @@ import { delay } from '@std/async';
 
 import { optValue } from '@/lib/args.ts';
 import { DEFAULT_PORTS, DEFAULT_WEB_PORT, DIFIT_VERSION, PORT_RANGE, PORTS, WEB_PORT } from '@/lib/config.ts';
-import { listeners, listServers, runningServers, serverPid, serverRoot } from '@/lib/servers.ts';
+import { listeners, listServers, runningServers, serverPid, serverRoot, stopServer } from '@/lib/servers.ts';
 import { publish, unpublish, urlOf } from '@/lib/tailscale.ts';
 
 import { ensureService, removeService } from './service.ts';
@@ -53,15 +53,7 @@ async function stopPort(port: number): Promise<void> {
 
    console.log(`== port ${port}: ${await serverRoot(pid)}`);
    await difit(['comment', 'get', '--port', String(port)]);
-   Deno.kill(pid);
-
-   for (let i = 0; i < 50 && !await isFree(port); i++) await delay(100);
-   if (!await isFree(port)) {
-      console.error(`pid ${pid} did not exit; sending SIGKILL`);
-      Deno.kill(pid, 'SIGKILL');
-   }
-
-   await unpublish(port);
+   await stopServer(port);
 }
 
 async function stop(args: string[]): Promise<void> {
