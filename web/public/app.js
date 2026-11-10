@@ -29,18 +29,17 @@ const byUrgency = (a, b) =>
 
 function item(s) {
    const count = s.comments ?? '?';
-   return `<li class="row"><a class="item" href="#${s.port}">
+   const asked = needsReview(s);
+   const path = (s.repo || '').replace(/^\/home\/[^/]+/, '~');
+   return `<li class="row${asked ? ' asked' : ''}"><a class="item" href="#${s.port}">
     ${icon('git-compare')}
-    <span class="name">${esc(repoName(s))}<span class="target">${esc(s.label)}</span>${
-      needsReview(s) ? '<span class="needed">Review needed</span>' : ''
-   }</span>
+    <span class="name">${esc(repoName(s))}<span class="target">${esc(s.label)}</span></span>
     <span class="count${s.comments > 0 ? ' open' : ''}" aria-label="${esc(count)} unresolved comments">
       ${icon('comment')}${esc(count)}
     </span>
-    ${s.request?.message && needsReview(s) ? `<span class="ask">${esc(s.request.message)}</span>` : ''}
-    <span class="meta">${esc((s.repo || '').replace(/^\/home\/[^/]+/, '~'))} · port ${s.port}${
-      needsReview(s) ? ` · requested ${ago(s.request.requested)}` : ''
-   }</span>
+    ${asked ? `<span class="status">Review needed · ${ago(s.request.requested)}</span>` : ''}
+    ${asked && s.request.message ? `<span class="ask">${esc(s.request.message)}</span>` : ''}
+    <span class="meta"><span class="path" title="${esc(path)}">${esc(path)}</span>&nbsp;· port ${s.port}</span>
   </a><button class="stop" type="button" data-port="${s.port}" aria-label="Stop ${esc(repoName(s))} ${esc(s.label)}">
     ${icon('x')}
   </button></li>`;

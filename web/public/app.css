@@ -7,6 +7,7 @@
    --text: #f0f6fc;
    --text-muted: #8b949e;
    --accent: #3fb950;
+   --attention: #d29922;
    --focus: #1f6feb;
    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -122,19 +123,31 @@ main {
    color: var(--text-muted);
    font: 12px var(--mono);
 }
-.needed {
-   display: inline-block;
-   margin-left: 6px;
-   white-space: nowrap;
-   padding: 1px 6px;
-   border: 1px solid #9e6a03;
-   border-radius: 6px;
-   color: #d29922;
+/* A review an agent asked for: an amber edge, a status line, and its message set off like a quote. */
+.row.asked {
+   box-shadow: inset 3px 0 0 var(--attention);
+}
+.status {
+   grid-column: 2 / -1;
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   color: var(--attention);
    font-size: 12px;
-   font-weight: 500;
+   font-weight: 600;
+}
+.status::before {
+   content: "";
+   width: 8px;
+   height: 8px;
+   border-radius: 50%;
+   background: currentColor;
 }
 .ask {
    grid-column: 2 / -1;
+   margin: 2px 0;
+   padding-left: 8px;
+   border-left: 2px solid var(--border);
    color: var(--text);
    font-size: 13px;
    overflow-wrap: anywhere;
@@ -153,9 +166,17 @@ main {
 }
 .meta {
    grid-column: 2 / -1;
+   display: flex;
+   min-width: 0;
    color: var(--text-muted);
    font-size: 12px;
-   overflow-wrap: anywhere;
+   white-space: nowrap;
+}
+/* Only the path gives way on a narrow screen; the port stays whole. */
+.path {
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
 }
 .note {
    padding: 24px 16px;
