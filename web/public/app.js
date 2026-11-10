@@ -59,6 +59,8 @@ list.addEventListener('click', async (event) => {
       return;
    }
    button.disabled = true;
+   button.classList.add('busy');
+   button.closest('.row').classList.add('pending');
    const res = await fetch(`/api/servers/${s.port}/stop`, { method: 'POST' });
    if (!res.ok && res.status !== 404) alert(`Couldn’t stop the review: ${await res.text()}`);
    await refresh();
@@ -66,14 +68,18 @@ list.addEventListener('click', async (event) => {
 
 done.addEventListener('click', async () => {
    done.disabled = true;
+   done.classList.add('busy');
    const res = await fetch(`/api/servers/${done.dataset.port}/done`, { method: 'POST' });
-   done.disabled = false;
-   if (!res.ok) {
+   if (res.ok) {
+      await refresh();
+      location.hash = '';
+      route(); // hashchange fires later, after the spinner would already be gone
+   } else {
       alert(`Couldn’t mark the review done: ${await res.text()}`);
-      return;
    }
-   await refresh();
-   location.hash = '';
+   // Only now: the spinner stays until the list is back, so the check never flashes in between.
+   done.disabled = false;
+   done.classList.remove('busy');
 });
 
 async function refresh() {
