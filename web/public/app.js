@@ -81,6 +81,53 @@ done.addEventListener('click', async () => {
    done.classList.remove('busy');
 });
 
+/**
+ * Shortens a path the way the nvim statusline in k-kuroguro/dotfiles does (lua/utils/path.lua): the root and the last
+ * component always stay, the middle becomes "…", and components come back from whichever side is shorter while it fits.
+ */
+function shortenPath(path, fits) {
+   if (fits(path)) return path;
+   let prefix = '';
+   let rest = path;
+   if (path.startsWith('/')) [prefix, rest] = ['/', path.slice(1)];
+   else if (path.startsWith('~/')) [prefix, rest] = ['~/', path.slice(2)];
+   const parts = rest.split('/').filter(Boolean);
+   const n = parts.length;
+   if (n <= 1) return path;
+
+   const build = (left, right) =>
+      prefix + [
+         ...parts.slice(0, left),
+         ...(left + right < n - 1 ? ['…'] : []),
+         ...parts.slice(n - 1 - right, n - 1),
+         parts[n - 1],
+      ].join('/');
+   let left = 0;
+   let right = 0;
+   let best = build(0, 0);
+   while (left + right < n - 1) {
+      const next = fits.width(parts[left]) <= fits.width(parts[n - 2 - right]) ? [left + 1, right] : [left, right + 1];
+      const candidate = build(...next);
+      if (!fits(candidate)) break;
+      [left, right] = next;
+      best = candidate;
+   }
+   return best;
+}
+
+const canvas = document.createElement('canvas').getContext('2d');
+
+function fitPaths() {
+   for (const el of list.querySelectorAll('.path')) {
+      canvas.font = getComputedStyle(el).font;
+      const width = (text) => canvas.measureText(text).width;
+      const fits = Object.assign((text) => width(text) <= el.clientWidth, { width });
+      el.textContent = shortenPath(el.title, fits);
+   }
+}
+
+addEventListener('resize', fitPaths);
+
 async function refresh() {
    try {
       const res = await fetch('/api/servers', { cache: 'no-store' });
@@ -92,6 +139,7 @@ async function refresh() {
       list.innerHTML = servers.length
          ? servers.map(item).join('')
          : `<li class="note">No reviews running. Start one with <code>difit .</code> in a repository.</li>`;
+      fitPaths();
    } catch (e) {
       // fetch rejects with a TypeError only when the request never reached the server.
       const why = e instanceof TypeError

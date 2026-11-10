@@ -172,7 +172,8 @@ main {
    font-size: 12px;
    white-space: nowrap;
 }
-/* Only the path gives way on a narrow screen; the port stays whole. */
+/* Only the path gives way on a narrow screen, shortened from the middle by fitPaths() in app.js; the port stays whole.
+   The ellipsis is for a last component too long to fit even alone. */
 .path {
    min-width: 0;
    overflow: hidden;
