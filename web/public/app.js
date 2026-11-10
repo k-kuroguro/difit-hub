@@ -67,10 +67,13 @@ list.addEventListener('click', async (event) => {
 done.addEventListener('click', async () => {
    done.disabled = true;
    const res = await fetch(`/api/servers/${done.dataset.port}/done`, { method: 'POST' });
-   if (!res.ok) alert(`Couldn’t mark the review done: ${await res.text()}`);
-   await refresh();
-   route();
    done.disabled = false;
+   if (!res.ok) {
+      alert(`Couldn’t mark the review done: ${await res.text()}`);
+      return;
+   }
+   await refresh();
+   location.hash = '';
 });
 
 async function refresh() {
