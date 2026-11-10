@@ -26,7 +26,7 @@ With [mise](https://mise.jdx.dev):
 
 ```toml
 [tools]
-"github:k-kuroguro/difit-hub" = "1.0.1"
+"github:k-kuroguro/difit-hub" = "1.1.0"
 ```
 
 For coding agents, install the `difit-hub` skill next to difit's own skills with [apm](https://github.com/microsoft/apm):
@@ -36,5 +36,5 @@ dependencies:
   apm:
     - yoshiko-pg/difit/skills/difit#v5.0.12
     - yoshiko-pg/difit/skills/difit-review#v5.0.12
-    - k-kuroguro/difit-hub/skills/difit-hub#v1.0.1
+    - k-kuroguro/difit-hub/skills/difit-hub#v1.1.0
 ```
