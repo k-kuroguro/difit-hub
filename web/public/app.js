@@ -116,13 +116,22 @@ function dropStoppedFrames() {
    }
 }
 
+// Notifications are tagged with the review's URL hash (see sw.js), so opening a review can clear its own.
+async function clearNotifications(port) {
+   const registration = await navigator.serviceWorker?.getRegistration();
+   for (const n of await registration?.getNotifications({ tag: `/#${port}` }) ?? []) n.close();
+}
+
 function route() {
    dropStoppedFrames();
    const s = servers.find((s) => `#${s.port}` === location.hash);
    review.hidden = !s;
    const shown = s && frameFor(s);
    for (const frame of frames.values()) frame.hidden = frame !== shown;
-   if (s) here.textContent = `${repoName(s)} · ${s.label}`;
+   if (s) {
+      here.textContent = `${repoName(s)} · ${s.label}`;
+      clearNotifications(s.port);
+   }
    done.hidden = !(s && needsReview(s));
    done.dataset.port = s ? s.port : '';
 }
