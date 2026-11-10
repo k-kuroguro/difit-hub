@@ -147,6 +147,8 @@ async function refresh() {
          : `Couldn’t load the reviews: ${esc(e.message)}`;
       list.innerHTML = `<li class="note">${why}</li>`;
    }
+   // Set from here rather than by :has(.list:empty), which WebKit does not always recheck after innerHTML changes.
+   list.parentElement.classList.remove('loading');
 }
 
 const frameKey = (s) => `${s.port}:${s.pid}`;

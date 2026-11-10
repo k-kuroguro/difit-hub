@@ -73,6 +73,27 @@ main {
    border-radius: 6px;
    overflow: hidden;
 }
+/* Until the first refresh fills it, the empty list would show as a lone border line; a spinner stands in for it,
+   after a moment so that a quick load does not flash one. app.js drops the class once the list is in. */
+main.loading .list {
+   display: none;
+}
+main.loading::after {
+   content: "";
+   display: block;
+   width: 24px;
+   height: 24px;
+   margin: 40px auto;
+   border: 2px solid var(--border);
+   border-top-color: var(--text-muted);
+   border-radius: 50%;
+   animation: spin 0.8s linear infinite, appear 0.2s 0.3s both;
+}
+@keyframes appear {
+   from {
+      opacity: 0;
+   }
+}
 .list li + li {
    border-top: 1px solid var(--border);
 }
@@ -278,6 +299,9 @@ main {
    .busy::before,
    .review:has(iframe.loading:not([hidden]))::after {
       animation-duration: 2.4s;
+   }
+   main.loading::after {
+      animation-duration: 2.4s, 0.2s;
    }
 }
 
